@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: todo-api
+  description: Simple to do API
+  contact:
+    email: jan.buechter@posteo.de
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.0.1-SNAPSHOT
+servers:
+  - url: https://www.jan-buechter.org/todo-api
+paths:
+  /todos:
+    get:
+      summary: get all todos 
+      security:
+        - openId:
+            - manager
+            - admin
+      description: |-
+        **Get all todos.** <br>
+      operationId: getAllTodos
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/todo'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Access token does not have the required roles
+  /todo:
+    post:
+      summary: create a todo
+      security:
+        - openId:
+            - manager
+            - admin
+      description: |-
+        **create a todo.**
+      operationId: createTodo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/todo'
+      responses:
+        '200':
+          description: successful operation - returns the added to do 
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/todo'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/problemDetails'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Access token does not have the required roles
+components:
+  securitySchemes:
+    openId:
+      type: openIdConnect
+      # TODO: openIdConnectUrl muss angepasst werden. ggf auch in Security chain
+      openIdConnectUrl: http://keycloakhost:keycloakport/auth/realms/{realm}/.well-known/openid-configuration
+  schemas:
+    todo:
+      type: object
+      required:
+        - text
+      properties:
+        uuid:
+          description: unique identifier of the todo used as primary key in the database
+          type: string
+          example: 27fae1e1-e845-47fa-a20c-edbfa9237511
+        createdAt:
+          description: creation date of the todo
+          type: string
+          format: date-time
+          example: 2017-07-21T17:32:28Z
+        dueDate:
+          description: due date of the todo
+          type: string
+          format: date-time
+          example: 2035-07-21T17:32:28Z
+        text:
+          type: string
+          example: IBW
+    problemDetails:
+      title: problemDetails
+      type: object
+      description: A Problem Details object according to RFC 9457
+      properties:
+        title:
+          type: string
+          description: a short, human-readable summary of the error
+          example: todo not found
+        status:
+          type: integer
+          format: int32
+          description: indicating the HTTP status code
+          minimum: 400
+          maximum: 600
+          example: 400
+        detail:
+          type: string
+          description: human-readable explanation specific to this occurrence of the problem
+          example: could not find todo for specified time frame
+        action:
+          type: string
+          description: proposed action to solve the problem
+          example: Verify time frame.
+        timestamp:
+          type: string
+          format: date-time
+          description: date and time (in UTC) when the error occurred (YYYY-MM-DD)
+          example: '2024-06-30T06:39:25Z'
+      required:
+        - title
+        - status
+        - detail
